@@ -1533,8 +1533,10 @@ class OniPlayer(QMainWindow):
 
         # Start in fullscreen mode by default
         QTimer.singleShot(100, self.toggle_fullscreen)
-        # Ensure controls are properly sized after fullscreen transition
+        # Ensure controls are properly sized after fullscreen transition with multiple attempts
         QTimer.singleShot(200, self._ensure_fullscreen_control_sizes)
+        QTimer.singleShot(400, self._ensure_fullscreen_control_sizes)
+        QTimer.singleShot(600, self._ensure_fullscreen_control_sizes)
 
 
 
@@ -2101,7 +2103,10 @@ class OniPlayer(QMainWindow):
             window_width = self.width()
             self.top_control_container.setFixedWidth(window_width)
             self.timeline_container.setFixedWidth(window_width)
-            self.update_control_positions()
+            self.top_control_container.setGeometry(0, 0, window_width, self.top_control_container.height())
+            self.timeline_container.setGeometry(0, self.height() - self.timeline_container.height(), window_width, self.timeline_container.height())
+            self.top_control_container.update()
+            self.timeline_container.update()
 
     def set_position(self, position):
         if self.has_media:
@@ -2555,6 +2560,8 @@ class OniPlayer(QMainWindow):
             window_width = self.width()
             self.top_control_container.setFixedWidth(window_width)
             self.timeline_container.setFixedWidth(window_width)
+            self.top_control_container.setGeometry(0, 0, window_width, self.top_control_container.height())
+            self.timeline_container.setGeometry(0, self.height() - self.timeline_container.height(), window_width, self.timeline_container.height())
         
         self.update_control_positions()
         self.update_volume_overlay_position()
