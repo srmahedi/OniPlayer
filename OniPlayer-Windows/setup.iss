@@ -45,7 +45,6 @@ Source: "features.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "libvlc.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "libvlccore.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "icon.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "plugins\*"; DestDir: "{app}/plugins"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dist\OniPlayer\_internal\*"; DestDir: "{app}/_internal"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
