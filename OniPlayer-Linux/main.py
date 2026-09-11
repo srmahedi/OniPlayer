@@ -40,7 +40,7 @@ except Exception as e:
 # Import VLC after setting up environment
 import vlc
 
-from PyQt6.QtCore import Qt, QTimer, QMimeData, QPoint, QDateTime, QEvent, QRect, QSize, QObject
+from PyQt6.QtCore import Qt, QTimer, QMimeData, QPoint, QDateTime, QEvent, QRect, QSize, QObject, QWIDGETSIZE_MAX
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QPalette, QColor, QMouseEvent, QKeyEvent, QAction, QActionGroup, QIcon, QFontMetrics, QPainter, QPen, QCursor
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
@@ -1107,6 +1107,7 @@ class OniPlayer(QMainWindow):
         # Create top control container first
         self.top_control_container = QWidget()
         self.top_control_container.setFixedHeight(30)
+        self.top_control_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.top_control_container.setStyleSheet("""
             QWidget {
                 background-color: #1a1a1a;
@@ -1139,6 +1140,7 @@ class OniPlayer(QMainWindow):
         self.timeline_container = QWidget()
         self.timeline_container.setObjectName("timelineContainer")
         self.timeline_container.setFixedHeight(40)
+        self.timeline_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.timeline_container.setStyleSheet("""
             #timelineContainer {
                 background-color: #1A1A1A;
@@ -1531,6 +1533,8 @@ class OniPlayer(QMainWindow):
 
         # Start in fullscreen mode by default
         QTimer.singleShot(100, self.toggle_fullscreen)
+        # Ensure controls are properly sized after fullscreen transition
+        QTimer.singleShot(200, self._ensure_fullscreen_control_sizes)
 
 
 
@@ -2010,6 +2014,11 @@ class OniPlayer(QMainWindow):
             
             self.showFullScreen()
             
+            # Resize control containers to match fullscreen width
+            window_width = self.width()
+            self.top_control_container.setFixedWidth(window_width)
+            self.timeline_container.setFixedWidth(window_width)
+            
             # Force immediate hide with aggressive repaint to prevent ghost effect
             self.top_control_container.hide()
             self.timeline_container.hide()
@@ -2032,6 +2041,10 @@ class OniPlayer(QMainWindow):
             self.showNormal()
             if hasattr(self, 'prev_geometry'):
                 self.setGeometry(self.prev_geometry)
+            
+            # Reset control containers to dynamic width for windowed mode
+            self.top_control_container.setFixedWidth(QWIDGETSIZE_MAX)
+            self.timeline_container.setFixedWidth(QWIDGETSIZE_MAX)
             
             self.top_control_container.show()
             self.timeline_container.show()
@@ -2079,6 +2092,14 @@ class OniPlayer(QMainWindow):
             self.video_frame.logo_overlay.hide()
         else:
             self.video_frame.logo_overlay.show()
+
+    def _ensure_fullscreen_control_sizes(self):
+        """Ensure control containers are properly sized in fullscreen mode"""
+        if self.isFullScreen():
+            window_width = self.width()
+            self.top_control_container.setFixedWidth(window_width)
+            self.timeline_container.setFixedWidth(window_width)
+            self.update_control_positions()
 
     def set_position(self, position):
         if self.has_media:
@@ -2526,6 +2547,13 @@ class OniPlayer(QMainWindow):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        
+        # Ensure control containers resize properly in fullscreen mode
+        if self.isFullScreen():
+            window_width = self.width()
+            self.top_control_container.setFixedWidth(window_width)
+            self.timeline_container.setFixedWidth(window_width)
+        
         self.update_control_positions()
         self.update_volume_overlay_position()
         self.update_title_overlay_position()
@@ -2623,6 +2651,11 @@ class OniPlayer(QMainWindow):
             return
             
         window_width = self.width()
+        
+        # In fullscreen mode, explicitly set container widths to match window width
+        if self.isFullScreen():
+            self.top_control_container.setFixedWidth(window_width)
+            self.timeline_container.setFixedWidth(window_width)
         
         self.top_control_container.setGeometry(
             0, 0, window_width, self.top_control_container.height()
