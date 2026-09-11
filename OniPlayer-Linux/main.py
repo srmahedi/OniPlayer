@@ -40,7 +40,7 @@ except Exception as e:
 # Import VLC after setting up environment
 import vlc
 
-from PyQt6.QtCore import Qt, QTimer, QMimeData, QPoint, QDateTime, QEvent, QRect, QSize, QObject, QWIDGETSIZE_MAX
+from PyQt6.QtCore import Qt, QTimer, QMimeData, QPoint, QDateTime, QEvent, QRect, QSize, QObject
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QPalette, QColor, QMouseEvent, QKeyEvent, QAction, QActionGroup, QIcon, QFontMetrics, QPainter, QPen, QCursor
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
@@ -2043,8 +2043,10 @@ class OniPlayer(QMainWindow):
                 self.setGeometry(self.prev_geometry)
             
             # Reset control containers to dynamic width for windowed mode
-            self.top_control_container.setFixedWidth(QWIDGETSIZE_MAX)
-            self.timeline_container.setFixedWidth(QWIDGETSIZE_MAX)
+            self.top_control_container.setMinimumWidth(0)
+            self.top_control_container.setMaximumWidth(16777215)
+            self.timeline_container.setMinimumWidth(0)
+            self.timeline_container.setMaximumWidth(16777215)
             
             self.top_control_container.show()
             self.timeline_container.show()
