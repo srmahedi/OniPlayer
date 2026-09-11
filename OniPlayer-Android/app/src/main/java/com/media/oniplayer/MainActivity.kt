@@ -1998,15 +1998,6 @@ class MainActivity : AppCompatActivity() {
         wasPlayingBeforeOpen: Boolean,
         onSelected: (Int) -> Unit
     ) {
-        if (tracks == null || tracks.isEmpty()) {
-            Toast.makeText(this, "No tracks available", Toast.LENGTH_SHORT).show()
-            if (wasPlayingBeforeOpen && mediaPlayer === player) {
-                player.play()
-                resetControlsHideTimer()
-            }
-            return
-        }
-
         val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.ModernBottomSheetDialogTheme)
         val view = layoutInflater.inflate(R.layout.dialog_track_selection, null)
         var selectionMade = false
@@ -2016,18 +2007,31 @@ class MainActivity : AppCompatActivity() {
         
         tvTitle.text = title
         
-        val trackNames = tracks.map { it.name }.toTypedArray()
+        val trackNames = if (tracks == null || tracks.isEmpty()) {
+            arrayOf("No tracks available")
+        } else {
+            tracks.map { it.name }.toTypedArray()
+        }
         val adapter = android.widget.ArrayAdapter(this, R.layout.item_track, trackNames)
         listView.adapter = adapter
         listView.choiceMode = android.widget.ListView.CHOICE_MODE_SINGLE
         
         // Find current track index
-        val currentIndex = tracks.indexOfFirst { it.id == currentTrackId }
+        val currentIndex = if (tracks != null && tracks.isNotEmpty()) {
+            tracks.indexOfFirst { it.id == currentTrackId }
+        } else {
+            -1
+        }
         if (currentIndex != -1) {
             listView.setItemChecked(currentIndex, true)
         }
         
         listView.setOnItemClickListener { _, _, position, _ ->
+            if (tracks == null || tracks.isEmpty()) {
+                dialog.dismiss()
+                return@setOnItemClickListener
+            }
+            
             selectionMade = true
             val selectedId = tracks[position].id
             val resumePlayback = {
