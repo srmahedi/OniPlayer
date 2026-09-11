@@ -1252,33 +1252,21 @@ class OniPlayer(QMainWindow):
         volume_layout.addWidget(self.volume_slider)
         
         # Time labels with more compact styling
-        self.time_label = QLabel("0:00")
+        self.time_label = QLabel("0:00 / 0:00")
         self.time_label.setStyleSheet("""
             QLabel {
                 color: #FFFFFF;
                 background: transparent;
                 font-size: 11px;
-                min-width: 35px;
-                padding: 0;
+                min-width: 70px;
+                padding: 0px;
+                margin: 0px;
             }
         """)
-        
-        self.duration_label = QLabel("/ 0:00")
-        self.duration_label.setStyleSheet("""
-            QLabel {
-                color: #FFFFFF;
-                background: transparent;
-                font-size: 11px;
-                min-width: 35px;
-                padding: 0;
-            }
-        """)
-        
+
         # Create time layout
         time_layout = QHBoxLayout()
-        time_layout.setSpacing(2)
         time_layout.addWidget(self.time_label)
-        time_layout.addWidget(self.duration_label)
         
         # Add widgets to timeline layout
         timeline_layout.addWidget(self.timeline)
@@ -1563,8 +1551,7 @@ class OniPlayer(QMainWindow):
                 self.current_file = None
                 # Reset UI elements
                 self.timeline.setValue(0)
-                self.time_label.setText("0:00")
-                self.duration_label.setText("/ 0:00")
+                self.time_label.setText("0:00 / 0:00")
                 self.title_label.setText("OniPlayer")
                 self.play_button.setIcon(timeline_icon(self.style(), QStyle.StandardPixmap.SP_MediaPlay))
                 self.video_frame.update()  # Force update to show logo
@@ -1586,8 +1573,7 @@ class OniPlayer(QMainWindow):
                 self.current_file = None
                 # Reset UI elements
                 self.timeline.setValue(0)
-                self.time_label.setText("0:00")
-                self.duration_label.setText("/ 0:00")
+                self.time_label.setText("0:00 / 0:00")
                 self.title_label.setText("OniPlayer")
                 self.play_button.setIcon(timeline_icon(self.style(), QStyle.StandardPixmap.SP_MediaPlay))
                 self.video_frame.update()  # Force update to show logo
@@ -1870,7 +1856,23 @@ class OniPlayer(QMainWindow):
                     time_str = f"{hours}:{minutes:02d}:{seconds:02d}"
                 else:
                     time_str = f"{minutes:02d}:{seconds:02d}"
-                self.time_label.setText(time_str)
+
+                # Get duration for complete display
+                length = self.media_player.get_length()
+                if length > 0:
+                    total_seconds = length / 1000
+                    hours = int(total_seconds // 3600)
+                    minutes = int((total_seconds % 3600) // 60)
+                    seconds = int(total_seconds % 60)
+
+                    if hours > 0:
+                        duration_str = f"{hours}:{minutes:02d}:{seconds:02d}"
+                    else:
+                        duration_str = f"{minutes:02d}:{seconds:02d}"
+
+                    self.time_label.setText(f"{time_str} / {duration_str}")
+                else:
+                    self.time_label.setText(f"{time_str} / 0:00")
                 
     def update_time_display(self, current_time):
         """Update the time display labels based on the given time in milliseconds"""
@@ -1884,8 +1886,7 @@ class OniPlayer(QMainWindow):
                 time_str = f"{hours}:{minutes:02d}:{seconds:02d}"
             else:
                 time_str = f"{minutes:02d}:{seconds:02d}"
-            self.time_label.setText(time_str)
-            
+
             # Update duration label with hours
             length = self.media_player.get_length()
             if length > 0:
@@ -1893,12 +1894,15 @@ class OniPlayer(QMainWindow):
                 hours = int(total_seconds // 3600)
                 minutes = int((total_seconds % 3600) // 60)
                 seconds = int(total_seconds % 60)
-                
+
                 if hours > 0:
-                    duration_str = f"/ {hours}:{minutes:02d}:{seconds:02d}"
+                    duration_str = f"{hours}:{minutes:02d}:{seconds:02d}"
                 else:
-                    duration_str = f"/ {minutes:02d}:{seconds:02d}"
-                self.duration_label.setText(duration_str)
+                    duration_str = f"{minutes:02d}:{seconds:02d}"
+
+                self.time_label.setText(f"{time_str} / {duration_str}")
+            else:
+                self.time_label.setText(f"{time_str} / 0:00")
 
     def set_volume(self, volume):
         """Set the volume of the media player"""
