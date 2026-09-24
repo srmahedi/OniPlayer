@@ -1071,25 +1071,30 @@ class VideoFrame(QFrame):
 class StrokedLabel(QLabel):
     def paintEvent(self, event):
         painter = QPainter(self)
+        if not painter.isActive():
+            return
+
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
+
         pen = QPen(Qt.GlobalColor.black, 4)
         painter.setPen(pen)
-        
-        x = 5
-        y = self.height() // 2 + 10
-        
+
+        # Use proper text alignment and centering
+        rect = self.rect()
+        flags = Qt.AlignmentFlag.AlignCenter
+
         offsets = [(-3,-3), (0,-3), (3,-3),
                   (-3,0),          (3,0),
                   (-3,3),  (0,3),  (3,3),
                   (-2,-2), (2,-2),
                   (-2,2),  (2,2)]
-                  
+
         for dx, dy in offsets:
-            painter.drawText(x + dx, y + dy, self.text())
-            
+            offset_rect = rect.translated(dx, dy)
+            painter.drawText(offset_rect, flags, self.text())
+
         painter.setPen(QColor("#00FFFF"))
-        painter.drawText(x, y, self.text())
+        painter.drawText(rect, flags, self.text())
 
 class OniPlayer(QMainWindow):
     def __init__(self):
@@ -1179,9 +1184,20 @@ class OniPlayer(QMainWindow):
         self.audio_track_overlay_timer = QTimer(self)
         self.audio_track_overlay_timer.setSingleShot(True)
         self.audio_track_overlay_timer.timeout.connect(self.hide_audio_track_overlay)
+
+        # Create video container widget
+        self.video_container = QWidget()
+        self.video_layout = QVBoxLayout(self.video_container)
+        self.video_layout.setContentsMargins(0, 0, 0, 0)
+        self.video_layout.setSpacing(0)
         
+        # Create video frame
+        self.video_frame = VideoFrame(self)
+        self.video_frame.setStyleSheet("background-color: black;")
+        self.video_layout.addWidget(self.video_frame)
+
         # Create volume indicator overlay
-        self.volume_overlay = StrokedLabel()
+        self.volume_overlay = StrokedLabel(self)
         self.volume_overlay.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.volume_overlay.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.volume_overlay.setWindowFlags(
@@ -1195,14 +1211,18 @@ class OniPlayer(QMainWindow):
                 font-size: 24px;
                 font-weight: bold;
                 padding: 10px;
-                background: rgba(0, 0, 0, 0.5);
+                background: transparent;
             }
         """)
         self.volume_overlay.setText("Volume: 100%")
+        self.volume_overlay.setMinimumWidth(220)  # Prevent resizing artifacts
+        self.volume_overlay.setMaximumWidth(220)  # Force fixed width
+        self.volume_overlay.setMinimumHeight(50)  # Force fixed height
+        self.volume_overlay.setMaximumHeight(50)  # Force fixed height
         self.volume_overlay.hide()
-        
+
         # Create title overlay
-        self.title_overlay = StrokedLabel()
+        self.title_overlay = StrokedLabel(self)
         self.title_overlay.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.title_overlay.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.title_overlay.setWindowFlags(
@@ -1225,17 +1245,6 @@ class OniPlayer(QMainWindow):
         self.title_overlay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.title_overlay.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.title_overlay.hide()
-
-        # Create video container widget
-        self.video_container = QWidget()
-        self.video_layout = QVBoxLayout(self.video_container)
-        self.video_layout.setContentsMargins(0, 0, 0, 0)
-        self.video_layout.setSpacing(0)
-        
-        # Create video frame
-        self.video_frame = VideoFrame(self)
-        self.video_frame.setStyleSheet("background-color: black;")
-        self.video_layout.addWidget(self.video_frame)
         
         self.video_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.video_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -2576,24 +2585,22 @@ class OniPlayer(QMainWindow):
                 self.volume_overlay.setText("Volume: Muted")
             else:
                 self.volume_overlay.setText(f"Volume: {volume}%")
-            
-            # Calculate position relative to the main window (global screen coords)
-            window_pos = self.mapToGlobal(QPoint(0, 0))
-            
+
             # Adjust size of overlay
             self.volume_overlay.adjustSize()
             overlay_width = self.volume_overlay.width()
             overlay_height = self.volume_overlay.height()
-            
+
             # Position in top-left corner with margins
             margin = 20
+            window_pos = self.mapToGlobal(QPoint(0, 0))
             volume_x = window_pos.x() + margin
             volume_y = window_pos.y() + margin
-            
+
             # Ensure overlay is within window bounds
             volume_x = max(window_pos.x(), min(volume_x, window_pos.x() + self.width() - overlay_width))
             volume_y = max(window_pos.y(), min(volume_y, window_pos.y() + self.height() - overlay_height))
-            
+
             # Move and show overlay
             self.volume_overlay.move(volume_x, volume_y)
             self.volume_overlay.show()
@@ -2619,21 +2626,21 @@ class OniPlayer(QMainWindow):
         # Cancel any existing hide timer
         if self.title_overlay_timer.isActive():
             self.title_overlay_timer.stop()
-        
+
         self.title_overlay.setText(title)
-        
-        # Calculate position relative to the video frame (global screen coords)
+
+        # Position relative to video frame (global screen coords)
         video_pos = self.video_frame.mapToGlobal(QPoint(0, 0))
         title_x = video_pos.x() + 20
         title_y = video_pos.y() + 20
-        
+
         # Set text with eliding for long titles
         self.title_overlay.setText(title)
         self.title_overlay.setWordWrap(False)
         font_metrics = QFontMetrics(self.title_overlay.font())
         elided_text = font_metrics.elidedText(title, Qt.TextElideMode.ElideRight, 800)
         self.title_overlay.setText(elided_text)
-        
+
         # Move to fixed position
         self.title_overlay.move(title_x, title_y)
         
