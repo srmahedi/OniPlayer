@@ -1043,10 +1043,10 @@ class VideoFrame(QFrame):
             self.parent.toggle_mute()
             event.accept()
         elif event.key() == Qt.Key.Key_PageUp:
-            self.parent.play_next()
+            self.parent.play_previous()
             event.accept()
         elif event.key() == Qt.Key.Key_PageDown:
-            self.parent.play_previous()
+            self.parent.play_next()
             event.accept()
         elif event.key() == Qt.Key.Key_A and not event.isAutoRepeat():
             self.parent.cycle_audio_track()
@@ -1896,10 +1896,10 @@ class OniPlayer(QMainWindow):
             self.toggle_mute()
             event.accept()
         elif event.key() == Qt.Key.Key_PageUp:
-            self.play_next()
+            self.play_previous()
             event.accept()
         elif event.key() == Qt.Key.Key_PageDown:
-            self.play_previous()
+            self.play_next()
             event.accept()
         elif event.key() == Qt.Key.Key_A and not event.isAutoRepeat():
             self.cycle_audio_track()

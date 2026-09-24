@@ -55,8 +55,8 @@ OniPlayer is designed to be fully controlled via keyboard shortcuts and advanced
 | `Up Arrow` | Volume Up |
 | `Down Arrow` | Volume Down |
 | `M` | Toggle Mute |
-| `Page Up` | Next Video in Playlist |
-| `Page Down` | Previous Video in Playlist |
+|| `Page Up` | Previous Video in Playlist |
+|| `Page Down` | Next Video in Playlist |
 | `A` | Cycle to Next Audio Track |
 | `S` | Toggle Subtitles On / Off |
 
