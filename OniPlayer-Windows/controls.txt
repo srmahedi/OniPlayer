@@ -13,8 +13,8 @@ Playback:
 - Down Arrow: Volume down
 - M: Toggle mute
 - Esc: Exit full screen
-- Page Up: Next video
-- Page Down: Previous video
+- Page Up: Previous video
+- Page Down: Next video
 - A: Cycle to next audio track
 - S: Toggle subtitles on/off
 
