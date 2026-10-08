@@ -148,6 +148,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gestureDetector: android.view.GestureDetector
     private lateinit var scaleGestureDetector: android.view.ScaleGestureDetector
 
+    // ── Audio Focus for Call Detection ─────────────────────────────────────
+    private var wasPlayingBeforeCall = false
+
     // ── Data ───────────────────────────────────────────────────────────────
     private var allVideos: MutableList<VideoItem> = mutableListOf()
     private var folders: List<FolderItem> = emptyList()
@@ -2317,6 +2320,9 @@ class MainActivity : AppCompatActivity() {
             val player = MediaPlayer(libVLC)
             mediaPlayer = player
 
+            // Request audio focus to detect incoming calls
+            requestAudioFocus()
+
             // VLCVideoLayout handles all surface lifecycle internally.
             // Third param = enableSubtitles (true required for SPU track rendering)
             player.attachViews(vlcVideoLayout, null, true, false)
@@ -2639,9 +2645,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             mediaPlayer = null
-            
+
             libVLC?.release()
             libVLC = null
+
+            // Abandon audio focus when stopping video
+            abandonAudioFocus()
             
             // Reset background state when completely stopping video
             isInBackground = false
@@ -2819,6 +2828,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Audio Focus for Call Detection ─────────────────────────────────────
+    private val audioFocusChangeListener = android.media.AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            android.media.AudioManager.AUDIOFOCUS_LOSS,
+            android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                // Incoming call or other audio interruption - pause video
+                if (currentScreen == Screen.PLAYER && mediaPlayer != null && mediaPlayer?.isPlaying == true) {
+                    wasPlayingBeforeCall = true
+                    mediaPlayer?.pause()
+                    android.util.Log.d("OniPlayer", "Paused video due to audio focus loss (call)")
+                }
+            }
+            android.media.AudioManager.AUDIOFOCUS_GAIN -> {
+                // Call ended - resume video if it was playing
+                if (wasPlayingBeforeCall && currentScreen == Screen.PLAYER && mediaPlayer != null) {
+                    mediaPlayer?.play()
+                    wasPlayingBeforeCall = false
+                    android.util.Log.d("OniPlayer", "Resumed video after audio focus regained")
+                }
+            }
+        }
+    }
+
+    private fun requestAudioFocus() {
+        val result = audioManager.requestAudioFocus(
+            audioFocusChangeListener,
+            android.media.AudioManager.STREAM_MUSIC,
+            android.media.AudioManager.AUDIOFOCUS_GAIN
+        )
+        android.util.Log.d("OniPlayer", "Audio focus request result: $result")
+    }
+
+    private fun abandonAudioFocus() {
+        audioManager.abandonAudioFocus(audioFocusChangeListener)
+    }
+
     // ── Lifecycle management ────────────────────────────────────────────────
     override fun onPause() {
         super.onPause()
@@ -2882,10 +2927,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    override fun onDestroy() { 
+    override fun onDestroy() {
         super.onDestroy()
         restoreSystemVolume()
-        stopVideo() 
+        stopVideo()
     }
     
     private fun restoreVideoPlayback() {
