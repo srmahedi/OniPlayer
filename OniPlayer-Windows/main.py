@@ -15,7 +15,7 @@ else:
     # If we're running as a normal Python script
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Set up paths for all resources
+# Set up paths for all resources 
 vlc_plugins_path = os.path.join(base_dir, 'plugins')
 icon_path = os.path.join(base_dir, 'icon.ico')
 libvlc_path = os.path.join(base_dir, 'libvlc.dll')
