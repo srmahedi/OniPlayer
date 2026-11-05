@@ -950,6 +950,14 @@ class StrokedLabel(QLabel):
 class OniPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        # Set initial volume and media state
+        self.playlist = []
+        self.current_file = None
+        self.has_media = False
+        self.is_muted = False
+        self.last_volume = 60  # Store last volume before mute
+
         self.setWindowTitle("OniPlayer")
         
         # Set window icon
@@ -1356,13 +1364,6 @@ class OniPlayer(QMainWindow):
         
         # Set minimum size
         self.setMinimumSize(800, 600)
-        
-        # Set initial volume and media state
-        self.playlist = []
-        self.current_file = None
-        self.has_media = False
-        self.is_muted = False
-        self.last_volume = 60  # Store last volume before mute
         
         # Set focus to video frame for keyboard events
         self.video_frame.setFocus()
