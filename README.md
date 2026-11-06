@@ -119,9 +119,6 @@ Make sure you have Arch Linux or a derivative with Python 3.10+ installed.
 # Navigate into the Linux folder
 cd "OniPlayer-Linux"
 
-# Install build dependencies
-sudo pacman -S --needed base-devel git libtool automake autoconf pkgconf gettext flex bison lua ffmpeg
-
 # Build VLC engine from source
 chmod +x libvlc.sh
 ./libvlc.sh
